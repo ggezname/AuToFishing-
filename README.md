@@ -1,33 +1,41 @@
 # AuToFishing
 
-AutoFish for AutoX.js, rebuilt as a separate project.
+โครงการพัฒนา AutoFish แยกจาก repository เดิม โดย repository เดิมใช้เป็นข้อมูลอ้างอิงเท่านั้น
 
-## Safety-first development
+## สถานะปัจจุบัน
 
-This repository is independent from `ggezname/autofish`. The original repository is reference-only and must not be modified.
+- Safety diagnostic v0.2.0
+- รองรับการกำหนดกรอบพื้นที่สแกน (ROI) ด้วยพิกัดหน้าจอ x,y,width,height
+- ตัดภาพเฉพาะกรอบ ROI ด้วย images.clip
+- มีตัวตรวจสอบขอบเขต: จุดตรวจจับใด ๆ ในอนาคตต้องอยู่ภายในกรอบที่ผู้ใช้กำหนด
+- ปฏิเสธกรอบที่ติดลบ เล็กเกินไป หรือเกินขอบหน้าจอ
+- ยังไม่มีตัวตรวจจับแถบแดง/ขาวและตัวติดตามเป้าหมาย
+- ยังไม่มีคำสั่งแตะหน้าจอ/ตกปลาอัตโนมัติ
 
-The new engine is intended for Redfinger, physical Android devices, and Android emulators. Compatibility must be verified per environment; it is not claimed until tested.
+## วิธีทดสอบใน AutoX.js
 
-## Development stages
+1. เปิด `main.js` ผ่าน Loader หรือวางไฟล์ลง AutoX.js
+2. อนุญาตสิทธิ์จับภาพหน้าจอ
+3. ดูขนาดหน้าจอที่แสดง
+4. กรอกกรอบพื้นที่แถบตกปลาในรูปแบบ `x,y,width,height` หน่วยพิกเซล
+5. ระบบจะตรวจสอบว่ากรอบอยู่ในหน้าจอ และตัดภาพเฉพาะ ROI
+6. หากกรอกผิดหรืออยู่นอกหน้าจอ ระบบจะหยุดโดยไม่แตะหน้าจอ
 
-1. Build modular screen capture, device profile, calibration, and vision components.
-2. Add red-zone detection and white-target tracking with confidence and freshness checks.
-3. Add latency-aware motion prediction and anti-miss action guards.
-4. Run diagnostic/replay tests with automated taps disabled.
-5. Run supervised live safety trials before enabling unattended fishing.
+ตัวอย่าง `180,620,520,100` เป็นเพียงตัวอย่างรูปแบบเท่านั้น ต้องใช้พิกัดจริงจากอุปกรณ์ของผู้ใช้
+
+## ขั้นตอนพัฒนาถัดไป
+
+1. เพิ่มหน้าจอเลือกกรอบแบบลากบนภาพหน้าจอ (แทนการกรอกพิกัด)
+2. เพิ่มตัวตรวจจับขอบเขตแถบสีแดงและแถบสีขาวภายใน ROI เท่านั้น
+3. บังคับให้ candidate และจุดคาดการณ์ทุกจุดผ่าน region guard
+4. เพิ่ม device profile และ calibration แยกอุปกรณ์
+5. เพิ่ม overlay/debug และชุดทดสอบภาพ
+6. ทดสอบแบบ diagnostic ก่อน supervised live test
 
 ## Safety invariants
 
-- Never tap based on prediction alone.
-- Reject stale frames, low-confidence detections, uncertain trajectories, and duplicate actions.
-- Require the predicted uncertainty interval to fit inside a safe interior of the red zone.
-- Diagnostic mode must not send game taps.
-- Keep per-device calibration and timing profiles separate.
-
-## Runtime
-
-Target runtime: AutoX.js on Android. APIs and JavaScript syntax must remain compatible with the actual AutoX.js runtime used for testing.
-
-## Status
-
-Initial project setup. Live fishing is not yet enabled or validated.
+- โหมด diagnostic ห้ามส่งคำสั่งแตะเกม
+- ห้ามใช้ผลตรวจจับที่อยู่นอกกรอบ ROI ที่ผู้ใช้กำหนด
+- ห้ามกดจาก prediction เพียงอย่างเดียว
+- ปฏิเสธภาพเก่า ความมั่นใจต่ำ และตำแหน่งที่ไม่แน่นอน
+- ยังไม่เปิดใช้งาน auto fishing จนกว่าจะผ่านการทดสอบจริง
