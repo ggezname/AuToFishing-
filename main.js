@@ -88,21 +88,25 @@ function closeAllPickers() {
 
 function createMaskPanel() {
     let w = floaty.rawWindow(<frame id="root" bg="#FF000000" w="*" h="*"/>);
-    w.setTouchable(false); w.setPosition(0, 0); w.setSize(1, 1);
+    w.setTouchable(false); w.setPosition(0, 0); w.setSize(40, 40);
     return w;
 }
 let maskTop = createMaskPanel(), maskBot = createMaskPanel();
 let maskLeft = createMaskPanel(), maskRight = createMaskPanel();
-let maskOff = { ox: 0, oy: 0 };
+// Measure each floaty panel separately to account for OEM/system insets.
+let maskOffsets = {
+    top: { ox: 0, oy: 0 }, bottom: { ox: 0, oy: 0 },
+    left: { ox: 0, oy: 0 }, right: { ox: 0, oy: 0 }
+};
 
-function setMaskRect(win, x, y, w, h) {
+function setMaskRect(win, off, x, y, w, h) {
     try {
         if (w <= 0 || h <= 0) {
             win.root.setVisibility(android.view.View.GONE);
             win.setSize(0, 0);
         } else {
             win.root.setVisibility(android.view.View.VISIBLE);
-            win.setPosition(Math.round(x - maskOff.ox), Math.round(y - maskOff.oy));
+            win.setPosition(Math.round(x - off.ox), Math.round(y - off.oy));
             win.setSize(Math.round(w), Math.round(h));
         }
     } catch (e) {}
@@ -110,10 +114,10 @@ function setMaskRect(win, x, y, w, h) {
 
 function hideBlackMask() {
     ui.run(() => {
-        setMaskRect(maskTop, 0, 0, 0, 0);
-        setMaskRect(maskBot, 0, 0, 0, 0);
-        setMaskRect(maskLeft, 0, 0, 0, 0);
-        setMaskRect(maskRight, 0, 0, 0, 0);
+        setMaskRect(maskTop, maskOffsets.top, 0, 0, 0, 0);
+        setMaskRect(maskBot, maskOffsets.bottom, 0, 0, 0, 0);
+        setMaskRect(maskLeft, maskOffsets.left, 0, 0, 0, 0);
+        setMaskRect(maskRight, maskOffsets.right, 0, 0, 0, 0);
     });
 }
 
@@ -126,14 +130,20 @@ function showBlackMask(scr) {
     let hx2 = Math.min(scr.w, rx + rw + 4), hy2 = Math.min(scr.h, ry + rh + 4);
     let pad = 120;
     ui.run(() => {
-        setMaskRect(maskTop, -pad, -pad, scr.w + pad * 2, hy1 + pad);
-        setMaskRect(maskBot, -pad, hy2, scr.w + pad * 2, (scr.h - hy2) + pad);
-        setMaskRect(maskLeft, -pad, hy1, hx1 + pad, hy2 - hy1);
-        setMaskRect(maskRight, hx2, hy1, (scr.w - hx2) + pad, hy2 - hy1);
+        setMaskRect(maskTop, maskOffsets.top, -pad, -pad, scr.w + pad * 2, hy1 + pad);
+        setMaskRect(maskBot, maskOffsets.bottom, -pad, hy2, scr.w + pad * 2, (scr.h - hy2) + pad);
+        setMaskRect(maskLeft, maskOffsets.left, -pad, hy1, hx1 + pad, hy2 - hy1);
+        setMaskRect(maskRight, maskOffsets.right, hx2, hy1, (scr.w - hx2) + pad, hy2 - hy1);
     });
 }
 
-setTimeout(() => { maskOff = getWindowOffset(maskTop, maskTop.root); hideBlackMask(); }, 150);
+setTimeout(() => {
+    maskOffsets.top = getWindowOffset(maskTop, maskTop.root);
+    maskOffsets.bottom = getWindowOffset(maskBot, maskBot.root);
+    maskOffsets.left = getWindowOffset(maskLeft, maskLeft.root);
+    maskOffsets.right = getWindowOffset(maskRight, maskRight.root);
+    hideBlackMask();
+}, 250);
 
 let mainWin = floaty.window(
     <vertical id="rootCard" padding="8" w="186">
